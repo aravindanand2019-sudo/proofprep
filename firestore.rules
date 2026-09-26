@@ -1,0 +1,43 @@
+rules_version = '2';
+
+// ProofPrep Firestore rules. Deploy: Firebase console → Firestore → Rules → paste → Publish
+// (or `firebase deploy --only firestore:rules`).
+//
+// Every write goes through Next.js API routes using the Admin SDK, which bypasses these
+// rules. Clients can only read, so a student cannot edit their own scores or mastery.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global catalog: public, read-only.
+    match /skills/{skillId} {
+      allow read: if true;
+    }
+    match /companies/{companyId} {
+      allow read: if true;
+    }
+    match /commPrompts/{promptId} {
+      allow read: if true;
+    }
+    match /practiceProblems/{problemId} {
+      allow read: if true;
+    }
+
+    // Answer keys and interview problems: server-only.
+    match /questions/{questionId} {
+      allow read, write: if false;
+    }
+    match /codingProblems/{problemId} {
+      allow read, write: if false;
+    }
+
+    // A signed-in user can read only their own document and everything under it.
+    match /users/{uid}/{document=**} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+    match /users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+  }
+}
